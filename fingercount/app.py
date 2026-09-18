@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import sys
 import time
-from dataclasses import dataclass, field
+from collections.abc import Sequence
 from pathlib import Path
 
 import cv2
 
+from fingercount.cli import parse_args
+from fingercount.config import AppConfig
 from fingercount.counter import FingerCounter
 from fingercount.emoji import EmojiRenderer
 from fingercount.overlay import draw_overlay
@@ -17,20 +19,6 @@ WINDOW_NAME = "Finger Count + Emoji"
 KEY_QUIT = ord("q")
 KEY_ESC = 27
 KEY_SCREENSHOT = ord("s")
-
-
-@dataclass(frozen=True)
-class AppConfig:
-    """Runtime settings for :func:`run`."""
-
-    camera: int = 0
-    width: int = 1280
-    height: int = 720
-    max_hands: int = 2
-    detection_confidence: float = 0.5
-    tracking_confidence: float = 0.5
-    screenshot_dir: Path = field(default_factory=Path.cwd)
-    window_size: tuple[int, int] = (1100, 620)
 
 
 class FpsMeter:
@@ -117,5 +105,6 @@ def run(config: AppConfig | None = None) -> None:
         cv2.destroyAllWindows()
 
 
-def main() -> None:
-    run()
+def main(argv: Sequence[str] | None = None) -> None:
+    """Console entry point: parse ``argv`` (default ``sys.argv[1:]``) and run."""
+    run(parse_args(argv))
