@@ -24,16 +24,6 @@ HAND_CONNECTIONS = [
     (0, 17),                                 # palm base
 ]
 
-# Per-finger landmark triples (mcp, pip/ip, tip) used for angle checks.
-# For the thumb we use (MCP=2, IP=3, TIP=4); IP is the analogue of PIP.
-FINGER_JOINTS = {
-    "thumb":  (2, 3, 4),
-    "index":  (5, 6, 8),
-    "middle": (9, 10, 12),
-    "ring":   (13, 14, 16),
-    "pinky":  (17, 18, 20),
-}
-FINGER_ORDER = ("thumb", "index", "middle", "ring", "pinky")
 
 THUMB_TIP = 4
 INDEX_TIP = 8

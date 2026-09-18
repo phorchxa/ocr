@@ -23,13 +23,8 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 from PIL import Image, ImageDraw, ImageFont
 
-from fingercount.geometry import angle_deg, lm_xy, palm_size
-from fingercount.gestures import (
-    FINGER_JOINTS,
-    FINGER_ORDER,
-    HAND_CONNECTIONS,
-    classify_gesture,
-)
+from fingercount import fingers
+from fingercount.gestures import HAND_CONNECTIONS, Pattern, classify_gesture
 
 # Pillow 10+ moved resampling constants under Image.Resampling.
 _LANCZOS = getattr(Image, "Resampling", Image).LANCZOS
@@ -144,11 +139,6 @@ class EmojiRenderer:
 
 
 class FingerCounter:
-    # Straightness thresholds (degrees) for the angle at the PIP/IP joint.
-    # Closer to 180° = finger is straight. Loosened so detection survives
-    # noisy landmarks at angled hand orientations.
-    STRAIGHT_THRESHOLD = 150.0
-    THUMB_STRAIGHT_THRESHOLD = 148.0
     # Tip-to-tip distance (normalized by palm size) below which we treat
     # the thumb and index as touching → OK sign.
     PINCH_DIST = 0.45
@@ -156,7 +146,9 @@ class FingerCounter:
     def __init__(self,
                  max_hands: int = 2,
                  detection_confidence: float = 0.5,
-                 tracking_confidence: float = 0.5):
+                 tracking_confidence: float = 0.5,
+                 thresholds: fingers.FingerThresholds | None = None):
+        self.thresholds = thresholds or fingers.DEFAULT_THRESHOLDS
         ensure_model()
         base_options = mp_python.BaseOptions(model_asset_path=MODEL_PATH)
         options = mp_vision.HandLandmarkerOptions(
@@ -174,43 +166,9 @@ class FingerCounter:
         """Pick the best gesture for a hand. Returns (label, emoji) or None."""
         return classify_gesture(landmarks, pattern, pinch_dist=self.PINCH_DIST)
 
-    def extended_fingers(self, landmarks) -> tuple[int, int, int, int, int]:
-        """Return (thumb, index, middle, ring, pinky) where 1 = extended.
-
-        Orientation-invariant: checks the angle at each finger's middle joint
-        plus, for the non-thumb fingers, that the tip is farther from the
-        wrist than the MCP. The thumb adds a splay check against the index
-        MCP so a thumb tucked across the palm is not counted as extended.
-        """
-        wrist = lm_xy(landmarks[0])
-        index_mcp = lm_xy(landmarks[5])
-        palm = palm_size(landmarks)
-
-        out = []
-        for name in FINGER_ORDER:
-            mcp_id, pip_id, tip_id = FINGER_JOINTS[name]
-            mcp = lm_xy(landmarks[mcp_id])
-            pip = lm_xy(landmarks[pip_id])
-            tip = lm_xy(landmarks[tip_id])
-
-            angle = angle_deg(mcp, pip, tip)
-
-            if name == "thumb":
-                # Thumb is extended if it's straight AND splayed away from
-                # the index MCP (so a curled-in thumb is not counted).
-                splay = np.linalg.norm(tip - index_mcp) / palm
-                extended = angle > self.THUMB_STRAIGHT_THRESHOLD and splay > 0.55
-            else:
-                # Tip must be farther from wrist than MCP (rules out fingers
-                # that are straight but folded toward the palm), plus the
-                # joint angle check.
-                farther = (np.linalg.norm(tip - wrist)
-                           > np.linalg.norm(mcp - wrist) * 1.05)
-                extended = angle > self.STRAIGHT_THRESHOLD and farther
-
-            out.append(1 if extended else 0)
-
-        return tuple(out)  # type: ignore[return-value]
+    def extended_fingers(self, landmarks) -> Pattern:
+        """Return (thumb, index, middle, ring, pinky) where 1 = extended."""
+        return fingers.extended_fingers(landmarks, self.thresholds)
 
     def _draw_hand(self, frame: np.ndarray, landmarks) -> None:
         h, w = frame.shape[:2]
