@@ -23,6 +23,8 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 from PIL import Image, ImageDraw, ImageFont
 
+from fingercount.geometry import angle_deg, lm_xy, palm_size
+
 # Pillow 10+ moved resampling constants under Image.Resampling.
 _LANCZOS = getattr(Image, "Resampling", Image).LANCZOS
 
@@ -92,19 +94,6 @@ def ensure_model() -> None:
             open(MODEL_PATH, "wb") as out:
         out.write(resp.read())
     print("Model ready.")
-
-
-def _lm_xy(lm) -> np.ndarray:
-    return np.array([lm.x, lm.y], dtype=np.float32)
-
-
-def _angle_deg(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
-    """Angle in degrees at vertex b, formed by segments b->a and b->c."""
-    v1 = a - b
-    v2 = c - b
-    denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-9
-    cosang = float(np.clip(np.dot(v1, v2) / denom, -1.0, 1.0))
-    return float(np.degrees(np.arccos(cosang)))
 
 
 class EmojiRenderer:
@@ -231,16 +220,13 @@ class FingerCounter:
         GESTURE_TOLERANCE. This makes recognition forgiving when the
         landmark detector flips one finger.
         """
-        wrist = _lm_xy(landmarks[0])
-        index_mcp = _lm_xy(landmarks[5])
-        pinky_mcp = _lm_xy(landmarks[17])
-        palm_size = max(np.linalg.norm(index_mcp - wrist),
-                        np.linalg.norm(pinky_mcp - wrist), 1e-6)
+        wrist = lm_xy(landmarks[0])
+        palm = palm_size(landmarks)
 
         # OK sign: thumb tip touching index tip, with middle/ring/pinky out.
-        thumb_tip = _lm_xy(landmarks[4])
-        index_tip = _lm_xy(landmarks[8])
-        pinch = np.linalg.norm(thumb_tip - index_tip) / palm_size
+        thumb_tip = lm_xy(landmarks[4])
+        index_tip = lm_xy(landmarks[8])
+        pinch = np.linalg.norm(thumb_tip - index_tip) / palm
         if pinch < self.PINCH_DIST and pattern[2] and pattern[3] and pattern[4]:
             return ("OK", "\U0001F44C")  # 👌
 
@@ -273,25 +259,23 @@ class FingerCounter:
         wrist than the MCP. The thumb adds a splay check against the index
         MCP so a thumb tucked across the palm is not counted as extended.
         """
-        wrist = _lm_xy(landmarks[0])
-        index_mcp = _lm_xy(landmarks[5])
-        pinky_mcp = _lm_xy(landmarks[17])
-        palm_size = max(np.linalg.norm(index_mcp - wrist),
-                        np.linalg.norm(pinky_mcp - wrist), 1e-6)
+        wrist = lm_xy(landmarks[0])
+        index_mcp = lm_xy(landmarks[5])
+        palm = palm_size(landmarks)
 
         out = []
         for name in FINGER_ORDER:
             mcp_id, pip_id, tip_id = FINGER_JOINTS[name]
-            mcp = _lm_xy(landmarks[mcp_id])
-            pip = _lm_xy(landmarks[pip_id])
-            tip = _lm_xy(landmarks[tip_id])
+            mcp = lm_xy(landmarks[mcp_id])
+            pip = lm_xy(landmarks[pip_id])
+            tip = lm_xy(landmarks[tip_id])
 
-            angle = _angle_deg(mcp, pip, tip)
+            angle = angle_deg(mcp, pip, tip)
 
             if name == "thumb":
                 # Thumb is extended if it's straight AND splayed away from
                 # the index MCP (so a curled-in thumb is not counted).
-                splay = np.linalg.norm(tip - index_mcp) / palm_size
+                splay = np.linalg.norm(tip - index_mcp) / palm
                 extended = angle > self.THUMB_STRAIGHT_THRESHOLD and splay > 0.55
             else:
                 # Tip must be farther from wrist than MCP (rules out fingers
