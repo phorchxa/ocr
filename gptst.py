@@ -10,7 +10,6 @@ Tested on macOS (Apple Silicon M3) with Python 3.12.
 Press 'q' to quit, 's' to save a screenshot.
 """
 
-import os
 import time
 
 import cv2
@@ -18,103 +17,11 @@ import mediapipe as mp
 import numpy as np
 from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
-from PIL import Image, ImageDraw, ImageFont
 
 from fingercount import fingers
+from fingercount.emoji import EmojiRenderer
 from fingercount.gestures import HAND_CONNECTIONS, Pattern, classify_gesture
 from fingercount.model import ensure_model
-
-# Pillow 10+ moved resampling constants under Image.Resampling.
-_LANCZOS = getattr(Image, "Resampling", Image).LANCZOS
-
-
-class EmojiRenderer:
-    """Renders color emojis onto BGR frames using Apple Color Emoji."""
-
-    FONT_PATHS = [
-        "/System/Library/Fonts/Apple Color Emoji.ttc",
-        "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
-        "C:/Windows/Fonts/seguiemj.ttf",
-    ]
-    # Apple Color Emoji ships bitmap strikes at fixed sizes only, and which
-    # ones Pillow accepts depends on the build. We try the largest workable
-    # size, rasterize once, then resize.
-    CANDIDATE_SIZES = (160, 96, 64, 48, 137, 109, 32)
-
-    def __init__(self):
-        self.font = None
-        self.native_size = 0
-        for path in self.FONT_PATHS:
-            if not os.path.exists(path):
-                continue
-            for size in self.CANDIDATE_SIZES:
-                try:
-                    self.font = ImageFont.truetype(path, size)
-                    self.native_size = size
-                    break
-                except OSError:
-                    continue
-            if self.font is not None:
-                break
-        self._cache: dict[tuple[str, int], np.ndarray] = {}
-
-    def _render_rgba(self, char: str, target_size: int) -> np.ndarray | None:
-        key = (char, target_size)
-        if key in self._cache:
-            return self._cache[key]
-        if self.font is None:
-            return None
-
-        canvas = Image.new("RGBA", (self.native_size + 20, self.native_size + 20),
-                           (0, 0, 0, 0))
-        draw = ImageDraw.Draw(canvas)
-        try:
-            draw.text((10, 0), char, font=self.font, embedded_color=True)
-        except Exception:
-            return None
-
-        bbox = canvas.getbbox()
-        if bbox is None:
-            return None
-        cropped = canvas.crop(bbox)
-        resized = cropped.resize((target_size, target_size), _LANCZOS)
-        arr = np.array(resized)  # RGBA
-        self._cache[key] = arr
-        return arr
-
-    def draw(self, frame: np.ndarray, char: str,
-             center: tuple[int, int], size: int = 110) -> np.ndarray:
-        rgba = self._render_rgba(char, size)
-        if rgba is None:
-            return frame
-
-        h, w = rgba.shape[:2]
-        cx, cy = center
-        x0 = cx - w // 2
-        y0 = cy - h // 2
-        x1, y1 = x0 + w, y0 + h
-
-        # Clip to frame bounds.
-        fx0 = max(x0, 0)
-        fy0 = max(y0, 0)
-        fx1 = min(x1, frame.shape[1])
-        fy1 = min(y1, frame.shape[0])
-        if fx0 >= fx1 or fy0 >= fy1:
-            return frame
-
-        sx0 = fx0 - x0
-        sy0 = fy0 - y0
-        sx1 = sx0 + (fx1 - fx0)
-        sy1 = sy0 + (fy1 - fy0)
-
-        patch = rgba[sy0:sy1, sx0:sx1]
-        alpha = patch[:, :, 3:4].astype(np.float32) / 255.0
-        rgb = patch[:, :, :3].astype(np.float32)
-        bgr = rgb[:, :, ::-1]
-
-        roi = frame[fy0:fy1, fx0:fx1].astype(np.float32)
-        frame[fy0:fy1, fx0:fx1] = (bgr * alpha + roi * (1.0 - alpha)).astype(np.uint8)
-        return frame
 
 
 class FingerCounter:
