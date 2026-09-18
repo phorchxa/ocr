@@ -24,6 +24,12 @@ from mediapipe.tasks.python import vision as mp_vision
 from PIL import Image, ImageDraw, ImageFont
 
 from fingercount.geometry import angle_deg, lm_xy, palm_size
+from fingercount.gestures import (
+    FINGER_JOINTS,
+    FINGER_ORDER,
+    HAND_CONNECTIONS,
+    classify_gesture,
+)
 
 # Pillow 10+ moved resampling constants under Image.Resampling.
 _LANCZOS = getattr(Image, "Resampling", Image).LANCZOS
@@ -35,54 +41,6 @@ MODEL_URL = (
 )
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "hand_landmarker.task")
-
-# Connections between MediaPipe hand landmarks, used for skeleton drawing.
-HAND_CONNECTIONS = [
-    (0, 1), (1, 2), (2, 3), (3, 4),          # thumb
-    (0, 5), (5, 6), (6, 7), (7, 8),          # index
-    (5, 9), (9, 10), (10, 11), (11, 12),     # middle
-    (9, 13), (13, 14), (14, 15), (15, 16),   # ring
-    (13, 17), (17, 18), (18, 19), (19, 20),  # pinky
-    (0, 17),                                 # palm base
-]
-
-# Per-finger landmark triples (mcp, pip/ip, tip) used for angle checks.
-# For the thumb we use (MCP=2, IP=3, TIP=4) — IP is the analogue of PIP.
-FINGER_JOINTS = {
-    "thumb":  (2, 3, 4),
-    "index":  (5, 6, 8),
-    "middle": (9, 10, 12),
-    "ring":   (13, 14, 16),
-    "pinky":  (17, 18, 20),
-}
-FINGER_ORDER = ("thumb", "index", "middle", "ring", "pinky")
-
-# Gesture lookup keyed by (thumb, index, middle, ring, pinky), 1 = extended.
-# Several patterns map to the same gesture so the matcher tolerates noisy
-# detections (e.g. a thumb that the model can't quite decide on).
-GESTURES = {
-    (0, 0, 0, 0, 0): ("Fist",          "\U0001F44A"),  # 👊
-    (1, 0, 0, 0, 0): ("Thumbs up",     "\U0001F44D"),  # 👍
-    (1, 1, 0, 0, 0): ("Thumbs up",     "\U0001F44D"),  # thumb + index (common slip)
-    (0, 1, 0, 0, 0): ("Pointing",      "\U0000261D"),  # ☝
-    (0, 0, 1, 0, 0): ("Middle finger", "\U0001F595"),  # 🖕
-    (1, 0, 1, 0, 0): ("Middle finger", "\U0001F595"),  # thumb slip
-    (0, 1, 1, 0, 0): ("Peace",         "\U0000270C"),  # ✌
-    (1, 1, 1, 0, 0): ("Three",         "\U0001F522"),  # 🔢
-    (0, 1, 1, 1, 0): ("Three",         "\U0001F522"),
-    (0, 1, 1, 1, 1): ("Four",          "\U0001F590"),  # 🖐
-    (1, 1, 1, 1, 1): ("Open palm",     "\U0001F590"),
-    (1, 1, 1, 1, 0): ("Open palm",     "\U0001F590"),
-    (1, 0, 0, 0, 1): ("Call me",       "\U0001F919"),  # 🤙
-    (0, 1, 0, 0, 1): ("Rock on",       "\U0001F918"),  # 🤘
-    (1, 1, 0, 0, 1): ("Love",          "\U0001F91F"),  # 🤟
-    (0, 0, 0, 0, 1): ("Pinky",         "\U0001F90F"),  # 🤏 (closest match)
-    (1, 0, 0, 1, 1): ("Spider-man",    "\U0001F578"),  # 🕸 (web-shooter pose)
-}
-
-# Two-tier tolerance: if the exact pattern doesn't match a gesture, we still
-# accept the closest one as long as the Hamming distance is small enough.
-GESTURE_TOLERANCE = 1
 
 
 def ensure_model() -> None:
@@ -213,43 +171,8 @@ class FingerCounter:
         self._t0 = time.time()
 
     def match_gesture(self, landmarks, pattern):
-        """Pick the best gesture for a hand. Returns (label, emoji) or None.
-
-        Order: special-case shape checks (OK, thumbs down) first, then exact
-        pattern lookup, then nearest pattern within Hamming distance ≤
-        GESTURE_TOLERANCE. This makes recognition forgiving when the
-        landmark detector flips one finger.
-        """
-        wrist = lm_xy(landmarks[0])
-        palm = palm_size(landmarks)
-
-        # OK sign: thumb tip touching index tip, with middle/ring/pinky out.
-        thumb_tip = lm_xy(landmarks[4])
-        index_tip = lm_xy(landmarks[8])
-        pinch = np.linalg.norm(thumb_tip - index_tip) / palm
-        if pinch < self.PINCH_DIST and pattern[2] and pattern[3] and pattern[4]:
-            return ("OK", "\U0001F44C")  # 👌
-
-        # Thumbs down: only thumb extended AND thumb tip is below the wrist
-        # (larger y in image space). Otherwise it's thumbs up.
-        if pattern == (1, 0, 0, 0, 0):
-            if thumb_tip[1] > wrist[1] + 0.02:
-                return ("Thumbs down", "\U0001F44E")  # 👎
-
-        if pattern in GESTURES:
-            return GESTURES[pattern]
-
-        # Tolerance match: pick the closest catalogued pattern.
-        best = None
-        best_dist = GESTURE_TOLERANCE + 1
-        for ref, value in GESTURES.items():
-            dist = sum(a != b for a, b in zip(ref, pattern, strict=True))
-            if dist < best_dist:
-                best_dist = dist
-                best = value
-        if best is not None and best_dist <= GESTURE_TOLERANCE:
-            return best
-        return None
+        """Pick the best gesture for a hand. Returns (label, emoji) or None."""
+        return classify_gesture(landmarks, pattern, pinch_dist=self.PINCH_DIST)
 
     def extended_fingers(self, landmarks) -> tuple[int, int, int, int, int]:
         """Return (thumb, index, middle, ring, pinky) where 1 = extended.
