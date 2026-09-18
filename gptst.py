@@ -11,11 +11,8 @@ Press 'q' to quit, 's' to save a screenshot.
 """
 
 import os
-import ssl
 import time
-import urllib.request
 
-import certifi
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -25,28 +22,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 from fingercount import fingers
 from fingercount.gestures import HAND_CONNECTIONS, Pattern, classify_gesture
+from fingercount.model import ensure_model
 
 # Pillow 10+ moved resampling constants under Image.Resampling.
 _LANCZOS = getattr(Image, "Resampling", Image).LANCZOS
-
-
-MODEL_URL = (
-    "https://storage.googleapis.com/mediapipe-models/hand_landmarker/"
-    "hand_landmarker/float16/1/hand_landmarker.task"
-)
-MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                          "hand_landmarker.task")
-
-
-def ensure_model() -> None:
-    if os.path.exists(MODEL_PATH):
-        return
-    print(f"Downloading hand landmarker model to {MODEL_PATH} ...")
-    ctx = ssl.create_default_context(cafile=certifi.where())
-    with urllib.request.urlopen(MODEL_URL, context=ctx) as resp, \
-            open(MODEL_PATH, "wb") as out:
-        out.write(resp.read())
-    print("Model ready.")
 
 
 class EmojiRenderer:
@@ -149,8 +128,8 @@ class FingerCounter:
                  tracking_confidence: float = 0.5,
                  thresholds: fingers.FingerThresholds | None = None):
         self.thresholds = thresholds or fingers.DEFAULT_THRESHOLDS
-        ensure_model()
-        base_options = mp_python.BaseOptions(model_asset_path=MODEL_PATH)
+        model_path = ensure_model()
+        base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
         options = mp_vision.HandLandmarkerOptions(
             base_options=base_options,
             num_hands=max_hands,
