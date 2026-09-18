@@ -1,0 +1,33 @@
+[project]
+name = "fingercount"
+version = "0.1.0"
+description = "Webcam finger counter and gesture-to-emoji overlay using MediaPipe and OpenCV"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+dependencies = [
+    "opencv-python",
+    "mediapipe",
+    "numpy",
+    "pillow",
+    "certifi",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [".venv", "__pycache__"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: import sorting, B: bugbear, UP: pyupgrade
+select = ["E", "W", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

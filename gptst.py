@@ -257,7 +257,7 @@ class FingerCounter:
         best = None
         best_dist = GESTURE_TOLERANCE + 1
         for ref, value in GESTURES.items():
-            dist = sum(a != b for a, b in zip(ref, pattern))
+            dist = sum(a != b for a, b in zip(ref, pattern, strict=True))
             if dist < best_dist:
                 best_dist = dist
                 best = value
@@ -327,7 +327,7 @@ class FingerCounter:
 
         if result.hand_landmarks:
             for landmarks, handedness in zip(result.hand_landmarks,
-                                             result.handedness):
+                                             result.handedness, strict=True):
                 label = handedness[0].category_name  # "Left" or "Right"
                 pattern = self.extended_fingers(landmarks)
                 count = sum(pattern)
