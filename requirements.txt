@@ -1,0 +1,7 @@
+# Runtime dependencies for gptst.py (finger counter + gesture emoji).
+# Versions match the environment the script was tested in (macOS, Python 3.12).
+opencv-python==4.13.0.92
+mediapipe==0.10.35
+numpy==2.4.5
+pillow==12.2.0
+certifi==2026.4.22
