@@ -13,93 +13,12 @@ Press 'q' to quit, 's' to save a screenshot.
 import time
 
 import cv2
-import mediapipe as mp
-import numpy as np
-from mediapipe.tasks import python as mp_python
-from mediapipe.tasks.python import vision as mp_vision
 
-from fingercount import fingers
+from fingercount.counter import FingerCounter, HandInfo
 from fingercount.emoji import EmojiRenderer
-from fingercount.gestures import HAND_CONNECTIONS, Pattern, classify_gesture
-from fingercount.model import ensure_model
 
 
-class FingerCounter:
-    # Tip-to-tip distance (normalized by palm size) below which we treat
-    # the thumb and index as touching → OK sign.
-    PINCH_DIST = 0.45
-
-    def __init__(self,
-                 max_hands: int = 2,
-                 detection_confidence: float = 0.5,
-                 tracking_confidence: float = 0.5,
-                 thresholds: fingers.FingerThresholds | None = None):
-        self.thresholds = thresholds or fingers.DEFAULT_THRESHOLDS
-        model_path = ensure_model()
-        base_options = mp_python.BaseOptions(model_asset_path=str(model_path))
-        options = mp_vision.HandLandmarkerOptions(
-            base_options=base_options,
-            num_hands=max_hands,
-            min_hand_detection_confidence=detection_confidence,
-            min_hand_presence_confidence=detection_confidence,
-            min_tracking_confidence=tracking_confidence,
-            running_mode=mp_vision.RunningMode.VIDEO,
-        )
-        self.landmarker = mp_vision.HandLandmarker.create_from_options(options)
-        self._t0 = time.time()
-
-    def match_gesture(self, landmarks, pattern):
-        """Pick the best gesture for a hand. Returns (label, emoji) or None."""
-        return classify_gesture(landmarks, pattern, pinch_dist=self.PINCH_DIST)
-
-    def extended_fingers(self, landmarks) -> Pattern:
-        """Return (thumb, index, middle, ring, pinky) where 1 = extended."""
-        return fingers.extended_fingers(landmarks, self.thresholds)
-
-    def _draw_hand(self, frame: np.ndarray, landmarks) -> None:
-        h, w = frame.shape[:2]
-        for a, b in HAND_CONNECTIONS:
-            x1, y1 = int(landmarks[a].x * w), int(landmarks[a].y * h)
-            x2, y2 = int(landmarks[b].x * w), int(landmarks[b].y * h)
-            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        for lm in landmarks:
-            x, y = int(lm.x * w), int(lm.y * h)
-            cv2.circle(frame, (x, y), 4, (0, 0, 255), -1)
-
-    def process_frame(self, frame: np.ndarray):
-        """Process one BGR frame; returns annotated frame and per-hand info."""
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-        ts_ms = int((time.time() - self._t0) * 1000)
-        result = self.landmarker.detect_for_video(mp_image, ts_ms)
-
-        total_fingers = 0
-        hands_info = []  # list of dicts per hand
-
-        if result.hand_landmarks:
-            for landmarks, handedness in zip(result.hand_landmarks,
-                                             result.handedness, strict=True):
-                label = handedness[0].category_name  # "Left" or "Right"
-                pattern = self.extended_fingers(landmarks)
-                count = sum(pattern)
-                total_fingers += count
-
-                gesture = self.match_gesture(landmarks, pattern)
-                hands_info.append({
-                    "label": label,
-                    "count": count,
-                    "pattern": pattern,
-                    "gesture": gesture,  # None if no match
-                })
-                self._draw_hand(frame, landmarks)
-
-        return frame, total_fingers, hands_info
-
-    def release(self) -> None:
-        self.landmarker.close()
-
-
-def _draw_emoji_panel(frame, hands_info, emoji: EmojiRenderer):
+def _draw_emoji_panel(frame, hands_info: list[HandInfo], emoji: EmojiRenderer):
     """Fixed panel in the top-right showing the current gesture(s).
 
     The panel never follows the hand: position is anchored to the frame.
@@ -132,7 +51,7 @@ def _draw_emoji_panel(frame, hands_info, emoji: EmojiRenderer):
     emoji_size = min(110, cell_h - 10)
     for i, info in enumerate(hands_info):
         cy = y0 + 40 + i * cell_h + cell_h // 2
-        gesture = info["gesture"]
+        gesture = info.gesture
         if gesture is None:
             cv2.putText(frame, "?",
                         (x0 + 30, cy + 12),
@@ -143,7 +62,7 @@ def _draw_emoji_panel(frame, hands_info, emoji: EmojiRenderer):
             name, char = gesture
             emoji.draw(frame, char, (x0 + emoji_size // 2 + 12, cy),
                        size=emoji_size)
-        cv2.putText(frame, f"{info['label']}",
+        cv2.putText(frame, f"{info.label}",
                     (x0 + emoji_size + 28, cy - 6),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (180, 180, 180), 1,
                     cv2.LINE_AA)
@@ -153,7 +72,7 @@ def _draw_emoji_panel(frame, hands_info, emoji: EmojiRenderer):
                     cv2.LINE_AA)
 
 
-def draw_overlay(frame, total: int, hands_info, fps: float,
+def draw_overlay(frame, total: int, hands_info: list[HandInfo], fps: float,
                  emoji: EmojiRenderer):
     h, w = frame.shape[:2]
 
@@ -166,10 +85,10 @@ def draw_overlay(frame, total: int, hands_info, fps: float,
 
     y = h - 50
     for info in reversed(hands_info):
-        name = info["gesture"][0] if info["gesture"] else "(unknown)"
+        name = info.gesture[0] if info.gesture else "(unknown)"
         cv2.putText(
             frame,
-            f"{info['label']} hand: {info['count']}  -  {name}",
+            f"{info.label} hand: {info.count}  -  {name}",
             (15, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
             cv2.LINE_AA,
         )
