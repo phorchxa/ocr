@@ -14,13 +14,7 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 
 from fingercount import fingers
-from fingercount.gestures import (
-    DEFAULT_PINCH_DIST,
-    HAND_CONNECTIONS,
-    Gesture,
-    Pattern,
-    classify_gesture,
-)
+from fingercount.gestures import DEFAULT_PINCH_DIST, Gesture, Pattern, classify_gesture
 from fingercount.model import ensure_model
 
 
@@ -70,18 +64,11 @@ class FingerCounter:
         """Return (thumb, index, middle, ring, pinky) where 1 = extended."""
         return fingers.extended_fingers(landmarks, self.thresholds)
 
-    def _draw_hand(self, frame: np.ndarray, landmarks) -> None:
-        h, w = frame.shape[:2]
-        for a, b in HAND_CONNECTIONS:
-            x1, y1 = int(landmarks[a].x * w), int(landmarks[a].y * h)
-            x2, y2 = int(landmarks[b].x * w), int(landmarks[b].y * h)
-            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        for lm in landmarks:
-            x, y = int(lm.x * w), int(lm.y * h)
-            cv2.circle(frame, (x, y), 4, (0, 0, 255), -1)
+    def process_frame(self, frame: np.ndarray) -> tuple[int, list[HandInfo]]:
+        """Detect hands in one BGR frame; returns (total fingers, hands).
 
-    def process_frame(self, frame: np.ndarray) -> tuple[np.ndarray, int, list[HandInfo]]:
-        """Process one BGR frame; returns (annotated frame, total fingers, hands)."""
+        The frame is not modified. Use :mod:`fingercount.overlay` to draw.
+        """
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
         ts_ms = int((time.time() - self._t0) * 1000)
@@ -106,9 +93,8 @@ class FingerCounter:
                         landmarks=landmarks,
                     )
                 )
-                self._draw_hand(frame, landmarks)
 
-        return frame, total_fingers, hands
+        return total_fingers, hands
 
     def release(self) -> None:
         self.landmarker.close()
