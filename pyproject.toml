@@ -13,6 +13,9 @@ dependencies = [
     "certifi",
 ]
 
+[project.scripts]
+fingercount = "fingercount.app:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
