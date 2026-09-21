@@ -21,6 +21,7 @@ def _confidence(text: str) -> float:
 
 
 def _positive_int(text: str) -> int:
+    """argparse type: an integer strictly greater than zero."""
     value = int(text)
     if value <= 0:
         raise argparse.ArgumentTypeError(f"must be a positive integer, got {text}")
