@@ -70,6 +70,7 @@ detections still resolve.
 | Pinky | 🤏 |
 | Spider-man | 🕸 |
 | Middle finger | 🖕 |
+| OK | 👌 |
 
 ## How it works
 
