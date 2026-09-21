@@ -83,3 +83,10 @@ rather than on the finger pattern alone.
 3. Each finger is classified as extended or folded from landmark positions.
 4. The five-finger pattern is looked up in the gesture table and the emoji is rendered
    with Pillow using the system emoji font, then composited back onto the frame.
+
+## Running the tests
+
+```bash
+pip install -e '.[dev]'
+pytest
+```
