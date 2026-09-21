@@ -55,6 +55,7 @@ def open_camera(index: int, width: int, height: int) -> cv2.VideoCapture:
 
 
 def screenshot_path(directory: Path, index: int) -> Path:
+    """Return the zero-padded file name for the ``index``-th screenshot."""
     return directory / f"finger_count_shot_{index:02d}.png"
 
 
