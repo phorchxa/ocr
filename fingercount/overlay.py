@@ -90,7 +90,10 @@ def draw_overlay(
     fps: float,
     emoji: EmojiRenderer,
 ) -> np.ndarray:
-    """Draw skeletons, the finger count box, per-hand lines, panel and HUD."""
+    """Draw skeletons, the finger count box, per-hand lines, panel and HUD.
+
+    ``frame`` is modified in place and returned for convenience.
+    """
     h, w = frame.shape[:2]
 
     for hand in hands:
