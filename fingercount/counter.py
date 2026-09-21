@@ -97,6 +97,7 @@ class FingerCounter:
         return total_fingers, hands
 
     def release(self) -> None:
+        """Free the underlying MediaPipe landmarker."""
         self.landmarker.close()
 
     def __enter__(self) -> FingerCounter:
