@@ -1,7 +1,7 @@
 # Finger Counter + Gesture Emoji
 
 Real-time hand tracking from your webcam using MediaPipe's Hand Landmarker and OpenCV.
-The script counts how many fingers are extended, recognizes common hand gestures, and
+The app counts how many fingers are extended, recognizes common hand gestures, and
 draws the matching emoji on the video feed.
 
 ## Requirements
