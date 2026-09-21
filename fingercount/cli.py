@@ -27,6 +27,7 @@ def _positive_int(text: str) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser with defaults taken from :class:`AppConfig`."""
     parser = argparse.ArgumentParser(
         prog="fingercount",
         description=(
