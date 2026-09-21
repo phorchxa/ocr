@@ -71,6 +71,7 @@ class FingerCounter:
         """
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+        # VIDEO mode requires monotonically increasing timestamps.
         ts_ms = int((time.time() - self._t0) * 1000)
         result = self.landmarker.detect_for_video(mp_image, ts_ms)
 
