@@ -91,3 +91,14 @@ pip install -e '.[dev]'
 pytest
 ruff check .
 ```
+
+## Project layout
+
+| Module | Purpose |
+| --- | --- |
+| `fingercount/app.py` | Webcam capture loop and keyboard handling |
+| `fingercount/counter.py` | MediaPipe wrapper producing per-hand results |
+| `fingercount/fingers.py` | Extended/folded classification per finger |
+| `fingercount/gestures.py` | Gesture catalogue and matching |
+| `fingercount/overlay.py` | OpenCV drawing of skeletons, panel and HUD |
+| `fingercount/emoji.py` | Color emoji rasterization with Pillow |
