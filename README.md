@@ -19,7 +19,8 @@ pip install -r requirements.txt
 ```
 
 The hand landmark model (`hand_landmarker.task`) ships with the repo. If it is missing,
-the script downloads it automatically from Google's MediaPipe model storage on first run.
+the app downloads it automatically from Google's MediaPipe model storage on first run.
+Set `FINGERCOUNT_MODEL_PATH` to load the model from a different location.
 
 ## Usage
 
