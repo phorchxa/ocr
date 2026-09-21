@@ -86,6 +86,8 @@ rather than on the finger pattern alone.
 
 ## Running the tests
 
+The tests use synthetic landmarks, so no webcam or MediaPipe model is needed.
+
 ```bash
 pip install -e '.[dev]'
 pytest
