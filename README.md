@@ -24,8 +24,10 @@ the script downloads it automatically from Google's MediaPipe model storage on f
 ## Usage
 
 ```bash
-python gptst.py
+python -m fingercount
 ```
+
+`python gptst.py` still works as a backwards-compatible entry point.
 
 | Key | Action |
 | --- | --- |
