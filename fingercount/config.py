@@ -21,4 +21,5 @@ class AppConfig:
     detection_confidence: float = 0.5
     tracking_confidence: float = 0.5
     screenshot_dir: Path = field(default_factory=Path.cwd)
+    # Initial preview window size in pixels; the user can resize it.
     window_size: tuple[int, int] = (1100, 620)
