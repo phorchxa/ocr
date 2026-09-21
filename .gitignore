@@ -26,3 +26,6 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# App output
+finger_count_shot_*.png
