@@ -41,6 +41,7 @@ Run `fingercount --help` for the full list.
 
 | Flag | Meaning |
 | --- | --- |
+| `--camera N` | Capture device index (default 0) |
 
 ## Recognized gestures
 
