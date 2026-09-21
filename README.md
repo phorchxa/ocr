@@ -89,4 +89,5 @@ rather than on the finger pattern alone.
 ```bash
 pip install -e '.[dev]'
 pytest
+ruff check .
 ```
