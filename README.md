@@ -35,6 +35,13 @@ After `pip install -e .` the `fingercount` command is also available.
 | `q` or `Esc` | Quit |
 | `s` | Save a screenshot as `finger_count_shot_NN.png` in the current directory |
 
+## Command-line options
+
+Run `fingercount --help` for the full list.
+
+| Flag | Meaning |
+| --- | --- |
+
 ## Recognized gestures
 
 Gestures are matched on which fingers are extended. If the exact pattern is not in the
