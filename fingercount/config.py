@@ -13,6 +13,7 @@ from pathlib import Path
 class AppConfig:
     """Runtime settings for :func:`fingercount.app.run`."""
 
+    # Capture device index and the resolution requested from it.
     camera: int = 0
     width: int = 1280
     height: int = 720
