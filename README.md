@@ -42,6 +42,7 @@ Run `fingercount --help` for the full list.
 | Flag | Meaning |
 | --- | --- |
 | `--camera N` | Capture device index (default 0) |
+| `--width W`, `--height H` | Requested capture resolution (default 1280x720) |
 
 ## Recognized gestures
 
