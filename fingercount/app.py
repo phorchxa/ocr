@@ -30,6 +30,7 @@ class FpsMeter:
         self._prev = time.time()
 
     def tick(self) -> float:
+        """Record one frame and return the smoothed FPS estimate."""
         now = time.time()
         inst = 1.0 / max(now - self._prev, 1e-6)
         self._prev = now
