@@ -95,6 +95,7 @@ def run(config: AppConfig | None = None) -> None:
                 frame = draw_overlay(frame, total, hands, fps, emoji)
                 cv2.imshow(WINDOW_NAME, frame)
 
+                # Mask to the low byte; some backends set high bits.
                 key = cv2.waitKey(1) & 0xFF
                 if key in (KEY_QUIT, KEY_ESC):
                     break
