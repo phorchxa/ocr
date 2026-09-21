@@ -5,6 +5,7 @@ description = "Webcam finger counter and gesture-to-emoji overlay using MediaPip
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
+keywords = ["mediapipe", "opencv", "hand-tracking", "gesture", "emoji", "webcam"]
 dependencies = [
     "opencv-python",
     "mediapipe",
