@@ -71,6 +71,7 @@ detections still resolve.
 | Spider-man | 🕸 |
 | Middle finger | 🖕 |
 | OK | 👌 |
+| Thumbs down | 👎 |
 
 ## How it works
 
