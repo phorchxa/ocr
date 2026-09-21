@@ -13,6 +13,7 @@ _DEFAULTS = AppConfig()
 
 
 def _confidence(text: str) -> float:
+    """argparse type: a float in the closed range [0, 1]."""
     value = float(text)
     if not 0.0 <= value <= 1.0:
         raise argparse.ArgumentTypeError(f"must be between 0 and 1, got {text}")
