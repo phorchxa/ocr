@@ -73,6 +73,9 @@ detections still resolve.
 | OK | 👌 |
 | Thumbs down | 👎 |
 
+OK and thumbs down are matched on hand shape (pinch distance and thumb direction)
+rather than on the finger pattern alone.
+
 ## How it works
 
 1. OpenCV captures frames from the default camera.
