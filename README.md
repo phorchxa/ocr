@@ -45,6 +45,7 @@ Run `fingercount --help` for the full list.
 | `--width W`, `--height H` | Requested capture resolution (default 1280x720) |
 | `--max-hands 1|2` | How many hands to track (default 2) |
 | `--detection-confidence`, `--tracking-confidence` | MediaPipe thresholds in 0..1 (default 0.5) |
+| `--screenshot-dir DIR` | Where the `s` key saves screenshots (default: current directory) |
 
 ## Recognized gestures
 
