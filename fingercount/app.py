@@ -88,6 +88,7 @@ def run(config: AppConfig | None = None) -> None:
                     print("Failed to read frame; exiting.")
                     break
 
+                # Mirror the frame so the preview behaves like a mirror.
                 frame = cv2.flip(frame, 1)
                 total, hands = counter.process_frame(frame)
                 fps = meter.tick()
