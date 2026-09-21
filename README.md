@@ -27,6 +27,7 @@ the script downloads it automatically from Google's MediaPipe model storage on f
 python -m fingercount
 ```
 
+After `pip install -e .` the `fingercount` command is also available.
 `python gptst.py` still works as a backwards-compatible entry point.
 
 | Key | Action |
