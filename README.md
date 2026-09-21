@@ -43,6 +43,7 @@ Run `fingercount --help` for the full list.
 | --- | --- |
 | `--camera N` | Capture device index (default 0) |
 | `--width W`, `--height H` | Requested capture resolution (default 1280x720) |
+| `--max-hands 1|2` | How many hands to track (default 2) |
 
 ## Recognized gestures
 
