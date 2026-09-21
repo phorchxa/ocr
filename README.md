@@ -102,3 +102,7 @@ ruff check .
 | `fingercount/gestures.py` | Gesture catalogue and matching |
 | `fingercount/overlay.py` | OpenCV drawing of skeletons, panel and HUD |
 | `fingercount/emoji.py` | Color emoji rasterization with Pillow |
+| `fingercount/cli.py` | Argument parsing |
+| `fingercount/config.py` | Runtime settings dataclass |
+| `fingercount/geometry.py` | Landmark geometry helpers |
+| `fingercount/model.py` | Locating and downloading the landmark model |
