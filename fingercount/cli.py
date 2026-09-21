@@ -13,6 +13,7 @@ _DEFAULTS = AppConfig()
 
 
 def _confidence(text: str) -> float:
+    """argparse type: a float in the closed range [0, 1]."""
     value = float(text)
     if not 0.0 <= value <= 1.0:
         raise argparse.ArgumentTypeError(f"must be between 0 and 1, got {text}")
@@ -20,6 +21,7 @@ def _confidence(text: str) -> float:
 
 
 def _positive_int(text: str) -> int:
+    """argparse type: an integer strictly greater than zero."""
     value = int(text)
     if value <= 0:
         raise argparse.ArgumentTypeError(f"must be a positive integer, got {text}")
@@ -27,6 +29,7 @@ def _positive_int(text: str) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser with defaults taken from :class:`AppConfig`."""
     parser = argparse.ArgumentParser(
         prog="fingercount",
         description=(

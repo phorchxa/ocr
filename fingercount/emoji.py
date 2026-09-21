@@ -88,6 +88,7 @@ class EmojiRenderer:
         if self.font is None:
             return None
 
+        # Pad the canvas so glyphs that overhang their advance are not clipped.
         canvas = Image.new(
             "RGBA", (self.native_size + 20, self.native_size + 20), (0, 0, 0, 0)
         )

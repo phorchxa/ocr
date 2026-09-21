@@ -70,7 +70,10 @@ THUMBS_DOWN_MARGIN = 0.02
 
 
 def hamming(a: Pattern, b: Pattern) -> int:
-    """Number of fingers whose extended state differs between two patterns."""
+    """Number of fingers whose extended state differs between two patterns.
+
+    ``hamming((1, 0, 0, 0, 0), (0, 0, 0, 0, 0)) == 1``.
+    """
     return sum(x != y for x, y in zip(a, b, strict=True))
 
 

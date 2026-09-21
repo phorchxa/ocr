@@ -23,7 +23,7 @@ DEFAULT_MODEL_PATH = Path(
     )
 )
 
-_CHUNK = 1 << 16
+_CHUNK = 1 << 16  # 64 KiB per read while streaming the download
 
 
 def _ssl_context() -> ssl.SSLContext:

@@ -13,6 +13,7 @@ from pathlib import Path
 class AppConfig:
     """Runtime settings for :func:`fingercount.app.run`."""
 
+    # Capture device index and the resolution requested from it.
     camera: int = 0
     width: int = 1280
     height: int = 720
@@ -20,4 +21,5 @@ class AppConfig:
     detection_confidence: float = 0.5
     tracking_confidence: float = 0.5
     screenshot_dir: Path = field(default_factory=Path.cwd)
+    # Initial preview window size in pixels; the user can resize it.
     window_size: tuple[int, int] = (1100, 620)

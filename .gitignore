@@ -8,6 +8,8 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
 # Virtual environments
 .venv/
@@ -26,3 +28,7 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# App output
+finger_count_shot_*.png
+*.part

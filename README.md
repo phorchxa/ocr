@@ -1,7 +1,7 @@
 # Finger Counter + Gesture Emoji
 
 Real-time hand tracking from your webcam using MediaPipe's Hand Landmarker and OpenCV.
-The script counts how many fingers are extended, recognizes common hand gestures, and
+The app counts how many fingers are extended, recognizes common hand gestures, and
 draws the matching emoji on the video feed.
 
 ## Requirements
@@ -19,18 +19,35 @@ pip install -r requirements.txt
 ```
 
 The hand landmark model (`hand_landmarker.task`) ships with the repo. If it is missing,
-the script downloads it automatically from Google's MediaPipe model storage on first run.
+the app downloads it automatically from Google's MediaPipe model storage on first run.
+Set `FINGERCOUNT_MODEL_PATH` to load the model from a different location.
 
 ## Usage
 
 ```bash
-python gptst.py
+python -m fingercount
 ```
+
+After `pip install -e .` the `fingercount` command is also available.
+`python gptst.py` still works as a backwards-compatible entry point.
 
 | Key | Action |
 | --- | --- |
 | `q` or `Esc` | Quit |
 | `s` | Save a screenshot as `finger_count_shot_NN.png` in the current directory |
+
+## Command-line options
+
+Run `fingercount --help` for the full list.
+
+| Flag | Meaning |
+| --- | --- |
+| `--camera N` | Capture device index (default 0) |
+| `--width W`, `--height H` | Requested capture resolution (default 1280x720) |
+| `--max-hands 1|2` | How many hands to track (default 2) |
+| `--detection-confidence`, `--tracking-confidence` | MediaPipe thresholds in 0..1 (default 0.5) |
+| `--screenshot-dir DIR` | Where the `s` key saves screenshots (default: current directory) |
+| `--version` | Print the package version and exit |
 
 ## Recognized gestures
 
@@ -53,6 +70,11 @@ detections still resolve.
 | Pinky | 🤏 |
 | Spider-man | 🕸 |
 | Middle finger | 🖕 |
+| OK | 👌 |
+| Thumbs down | 👎 |
+
+OK and thumbs down are matched on hand shape (pinch distance and thumb direction)
+rather than on the finger pattern alone.
 
 ## How it works
 
@@ -61,3 +83,28 @@ detections still resolve.
 3. Each finger is classified as extended or folded from landmark positions.
 4. The five-finger pattern is looked up in the gesture table and the emoji is rendered
    with Pillow using the system emoji font, then composited back onto the frame.
+
+## Running the tests
+
+The tests use synthetic landmarks, so no webcam or MediaPipe model is needed.
+
+```bash
+pip install -e '.[dev]'
+pytest
+ruff check .
+```
+
+## Project layout
+
+| Module | Purpose |
+| --- | --- |
+| `fingercount/app.py` | Webcam capture loop and keyboard handling |
+| `fingercount/counter.py` | MediaPipe wrapper producing per-hand results |
+| `fingercount/fingers.py` | Extended/folded classification per finger |
+| `fingercount/gestures.py` | Gesture catalogue and matching |
+| `fingercount/overlay.py` | OpenCV drawing of skeletons, panel and HUD |
+| `fingercount/emoji.py` | Color emoji rasterization with Pillow |
+| `fingercount/cli.py` | Argument parsing |
+| `fingercount/config.py` | Runtime settings dataclass |
+| `fingercount/geometry.py` | Landmark geometry helpers |
+| `fingercount/model.py` | Locating and downloading the landmark model |

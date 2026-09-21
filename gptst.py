@@ -10,7 +10,7 @@ Requirements:
     pip install -r requirements.txt
 
 Tested on macOS (Apple Silicon M3) with Python 3.12.
-Press 'q' to quit, 's' to save a screenshot.
+Press 'q' or Esc to quit, 's' to save a screenshot.
 """
 
 from fingercount.app import main

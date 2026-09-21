@@ -30,6 +30,7 @@ class FpsMeter:
         self._prev = time.time()
 
     def tick(self) -> float:
+        """Record one frame and return the smoothed FPS estimate."""
         now = time.time()
         inst = 1.0 / max(now - self._prev, 1e-6)
         self._prev = now
@@ -55,6 +56,7 @@ def open_camera(index: int, width: int, height: int) -> cv2.VideoCapture:
 
 
 def screenshot_path(directory: Path, index: int) -> Path:
+    """Return the zero-padded file name for the ``index``-th screenshot."""
     return directory / f"finger_count_shot_{index:02d}.png"
 
 
@@ -86,12 +88,14 @@ def run(config: AppConfig | None = None) -> None:
                     print("Failed to read frame; exiting.")
                     break
 
+                # Mirror the frame so the preview behaves like a mirror.
                 frame = cv2.flip(frame, 1)
                 total, hands = counter.process_frame(frame)
                 fps = meter.tick()
                 frame = draw_overlay(frame, total, hands, fps, emoji)
                 cv2.imshow(WINDOW_NAME, frame)
 
+                # Mask to the low byte; some backends set high bits.
                 key = cv2.waitKey(1) & 0xFF
                 if key in (KEY_QUIT, KEY_ESC):
                     break
